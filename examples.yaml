@@ -1,7 +1,9 @@
 AWSTemplateFormatVersion: "2010-09-09"
+
 Resources:
-############################################
+###########################################
   # # Sample created EC2 with Security Group #
+
   # MyEc2Instance:
   #   Type: 'AWS::EC2::Instance'
   #   Properties:
@@ -12,7 +14,7 @@ Resources:
   #     Tags:
   #       - Key: Name
   #         Value: Sample
-  #    # IamInstanceProfile:
+  #     IamInstanceProfile: !Ref MyEC2InstanceRole
   # MySecurityGroup:
   #   Type: 'AWS::EC2::SecurityGroup'
   #   Properties:
@@ -22,14 +24,47 @@ Resources:
   #         FromPort: 22
   #         ToPort: 22
   #         CidrIp: 199.66.91.253/32
-############################################
-  MyEC2InstanceRole:
-    Type: AWS::IAM::InstanceProfile
-    Properties: 
-      Roles:
-        - IAM Roles 
-      InstanceProfileName: CFInstanceRole
+###########################################
 
-  MyEC2Role:
-    Type: AWS::IAM::Role
-    Properties:
+  # MyS3Bucket:
+  #   Type: AWS::S3::Bucket
+  #   DependsOn: !Ref MyEC2Policy
+  #   Properties:
+  #     BucketName: mybucket007lolololol1
+
+###########################################
+  # CFInstanceRole:
+  #   Type: AWS::IAM::Role
+  #   Properties:
+  #     AssumeRolePolicyDocument:
+  #       Statement:
+  #         - Effect: Allow
+  #           Principal:
+  #             Service:
+  #               - ec2.amazonaws.com
+  #           Action:
+  #             - sts:AssumeRole
+  #     Path: "/"
+
+  # MyEC2Policy:
+  #   Type: AWS::IAM::Policy
+  #   Properties:
+  #     PolicyName: MyPolicy
+  #     PolicyDocument:
+  #       Statement:
+  #         - Effect: Allow
+  #           Action: "s3:*"
+  #           #Resource: !Join ['', ['arn:aws:s3:::', !Ref MyS3Bucket]]
+  #           Resource: "*"
+  #     Roles: 
+  #       - !Ref CFInstanceRole
+
+  # MyEC2InstanceRole:
+  #   Type: AWS::IAM::InstanceProfile
+  #   Properties: 
+  #     Roles:
+  #       - !Ref CFInstanceRole
+  #     InstanceProfileName: ectworoletest
+
+
+###########################################

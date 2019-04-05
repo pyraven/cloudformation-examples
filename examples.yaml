@@ -1,0 +1,35 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Resources:
+############################################
+  # # Sample created EC2 with Security Group #
+  # MyEc2Instance:
+  #   Type: 'AWS::EC2::Instance'
+  #   Properties:
+  #     SecurityGroups: [!Ref MySecurityGroup]
+  #     KeyName: sample
+  #     ImageId: ami-061392db613a6357b
+  #     InstanceType: t2.micro
+  #     Tags:
+  #       - Key: Name
+  #         Value: Sample
+  #    # IamInstanceProfile:
+  # MySecurityGroup:
+  #   Type: 'AWS::EC2::SecurityGroup'
+  #   Properties:
+  #     GroupDescription: SSH Access
+  #     SecurityGroupIngress:
+  #       - IpProtocol: tcp
+  #         FromPort: 22
+  #         ToPort: 22
+  #         CidrIp: 199.66.91.253/32
+############################################
+  MyEC2InstanceRole:
+    Type: AWS::IAM::InstanceProfile
+    Properties: 
+      Roles:
+        - IAM Roles 
+      InstanceProfileName: CFInstanceRole
+
+  MyEC2Role:
+    Type: AWS::IAM::Role
+    Properties:

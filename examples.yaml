@@ -68,3 +68,22 @@ Resources:
 
 
 ###########################################
+
+  EC2:
+    Type: AWS::EC2::Instance
+    Properties:
+      :
+      :
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          packages:
+            yum:
+              httpd: []
+          groups:
+          users:
+          sources:
+          files:
+          commands:
+          services:
+

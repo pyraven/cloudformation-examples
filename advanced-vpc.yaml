@@ -1,0 +1,227 @@
+################################################         
+# Headers 
+################################################
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: "Sample VPC with instances in public, private subnet."
+
+################################################
+
+# Parameters
+Parameters:
+ 
+  MyKeyPair:
+    Type : AWS::EC2::KeyPair::KeyName
+    Description:
+      "Select a key pair from the dropdown to deploy FW with."
+
+  IPAddress:
+    Type: String
+    Description:
+      "Enter your IP Address here (ex. 0.0.0.0/32)"
+    AllowedPattern: (\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})
+    ConstraintDescription: Must be a valid IP CIDR range of the form x.x.x.x/x.
+
+################################################         
+# Resources
+################################################
+
+# VPC
+
+Resources:
+  MyVPC:
+    Type: AWS::EC2::VPC
+    Properties: 
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: Demo
+
+################################################
+
+# Subnets
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.1.0/24
+      Tags:
+        - Key: Name
+          Value: PublicSubnet
+      VpcId: !Ref MyVPC
+
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.2.0/24
+      Tags:
+        - Key: Name
+          Value: PrivateSubnet
+      VpcId: !Ref MyVPC
+
+################################################
+
+# Route Tables
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties: 
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: PublicRT
+
+  PrivatecRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties: 
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: PrivateRT
+
+################################################
+
+# Subnet Association
+
+  AssociatePublic:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet
+
+  AssociatePrivate:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref PrivatecRouteTable
+      SubnetId: !Ref PrivateSubnet
+
+################################################
+
+# Internet Gateway
+# A reminder, dont create this without approval
+
+  MyIGW:
+    Type: AWS::EC2::InternetGateway
+    Properties: 
+      Tags:
+        - Key: Name
+          Value: IGW
+
+################################################
+
+# Attach Gateway to VPC
+
+  AttachedMyIGW:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: 
+      InternetGatewayId: !Ref MyIGW
+      VpcId: !Ref MyVPC
+
+################################################
+
+# EIP
+
+  MyEIPForNAT:
+    Type: AWS::EC2::EIP
+
+################################################
+
+# Nat Gateway
+  
+  MyNGW:
+    Type: AWS::EC2::NatGateway
+    Properties: 
+      AllocationId: !GetAtt MyEIPForNAT.AllocationId
+      SubnetId: !Ref PublicSubnet
+      Tags: 
+        - Key: Name
+          Value: NATGateway
+
+################################################
+
+# IGW Route
+
+  RouteToIGW:
+    Type: AWS::EC2::Route
+    Properties: 
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref MyIGW
+      RouteTableId: !Ref PublicRouteTable
+
+
+################################################
+
+# NAT GW Route
+
+  RouteToNAT:
+    Type: AWS::EC2::Route
+    Properties: 
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref MyNGW
+      RouteTableId: !Ref PrivatecRouteTable
+
+################################################
+
+# SecurityGroup
+
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Open necessary ports for SSHing
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: !Ref IPAddress
+      - IpProtocol: -1
+        CidrIp: 10.0.0.0/16
+      VpcId: !Ref MyVPC
+
+################################################
+
+# Public Instance
+
+  PublicInstance:
+    Type: AWS::EC2::Instance                    
+    Properties:
+      ImageId: ami-0de53d8956e8dcf80
+      InstanceType: t2.micro
+      KeyName: !Ref MyKeyPair
+      NetworkInterfaces: 
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref PublicSubnet
+          GroupSet: [!Ref MySecurityGroup]
+      UserData:
+        Fn::Base64:
+          !Sub |
+              #!/bin/bash -ex
+              ping -c 3 google.com > /tmp/testing.txt;
+      Tags: 
+        - Key: Name
+          Value: Public Instance
+
+################################################
+
+# PrivateInstance
+
+  PrivateInstance:
+    Type: AWS::EC2::Instance                    
+    Properties:
+      ImageId: ami-0de53d8956e8dcf80
+      SecurityGroupIds: [!Ref MySecurityGroup]
+      InstanceType: t2.micro
+      KeyName: !Ref MyKeyPair
+      SubnetId: !Ref PrivateSubnet
+      UserData:
+        Fn::Base64:
+          !Sub |
+              #!/bin/bash -ex
+              ping -c 3 youtube.com > /tmp/testing.txt;
+      Tags: 
+        - Key: Name
+          Value: Private Instance
+
+################################################

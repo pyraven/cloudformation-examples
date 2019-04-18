@@ -1,0 +1,18 @@
+################################################         
+# Headers 
+################################################
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: "Sample CloudFormation Template."
+
+################################################         
+# S3 Bucket # lowercase only
+################################################
+
+Resources:
+  MyS3BucketOne:
+    Type: AWS::S3::Bucket
+    Properties: 
+       BucketName: myfavoritebucketever0088
+
+################################################
